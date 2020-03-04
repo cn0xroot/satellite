@@ -7,8 +7,14 @@ In order to set up your receiver system, please read the following information
 carefully. For additional help, go to the #blockstream-satellite IRC channel on
 freenode.
 
-This is an initial release and regular improvements will be made to make
-Blockstream Satellite more user friendly and less technically complex.
+## Required Version
+
+**IMPORTANT:** Please note that the Blockstream Satellite network was updated
+with backwards incompatible changes on March 11, 2019. From this date on, the
+required Blockstream Satellite receiver version should be greater than or equal
+to `v1.3.0`. The most recent version is `v1.4.0`, which is the recommended one.
+Meanwhile, Bitcoin FIBRE should be the version from [the master
+branch](https://github.com/bitcoinfibre/bitcoinfibre/tree/master).
 
 # Getting Started
 
@@ -37,7 +43,7 @@ All of these steps are thoroughly explained next.
     - [2. Mount the Antenna](#2-mount-the-antenna)
     - [3. Prepare to Locate the Blockstream Satellite Signal](#3-prepare-to-locate-the-blockstream-satellite-signal)
     - [4. Connect the Equipment](#4-connect-the-equipment)
-    - [5. Run the Blockstream Satellite Receiver](#5-run-the-blockstream-satellite-receiver)
+    - [5. Compute the receiver frequency](#5-compute-the-receiver-frequency)
     - [6. Search for the Blockstream Satellite Signal](#6-search-for-the-blockstream-satellite-signal)
     - [7. Next Steps](#7-next-steps)
 - [Run the Receiver](#run-the-receiver)
@@ -46,6 +52,9 @@ All of these steps are thoroughly explained next.
     - [Frequency Scan Mode](#frequency-scan-mode)
     - [Split Receiver Mode](#split-receiver-mode)
 - [Run Bitcoin FIBRE](#run-bitcoin-fibre)
+- [Satellite API](#satellite-api)
+- [Running on Raspberry Pi](#running-on-raspberry-pi)
+- [Running on Docker](#running-on-docker)
 - [Frequent issues and questions](#frequent-issues-and-questions)
 
 <!-- markdown-toc end -->
@@ -78,21 +87,32 @@ with the frequency band that suits your coverage region.
 
 ### Satellite Frequency Bands
 
-Blockstream Satellite operates in Ku band and C band, depending on region. Ku
-band is used in North America, South America, Africa and Europe. C band is used
-in Asia-Pacific region.
+Blockstream Satellite operates in Ku high band, Ku low band and C band,
+depending on region. Ku high band is used in North America and South America. Ku
+low band is used in Africa and Europe. C band is used in Asia-Pacific region.
 
->C band:     3.4 GHZ - 4.2 GHz
+>C band: 3.7 GHZ - 4.2 GHz
 >
->Ku band: 11.7 GHz to 12.7 GHz
+>Ku low band: 10.7 to 11.7 GHz
 >
->Ka band:  17.7 GHz - 21.2 GHz
+>Ku high band: 11.7 to 12.75 GHz
 
 You can always use antennas designed for higher frequencies. For example, an
-antenna designed for Ka band will work for Ku band and C band, as it is designed
-for higher frequencies than the one used by Blockstream Satellite. However, a C
-band antenna will not work for Ku band, as it is designed for frequencies lower
-than Ku band.
+antenna designed for Ka band will work for Ku bands and C band, as it is
+designed for higher frequencies than the ones used by Blockstream
+Satellite. However, a C band antenna will not work for Ku bands, as it is
+designed for lower frequencies.
+
+The following table summarizes the transmission bands of the satellites we use:
+
+| Satellite          | Band    |
+|--------------------|---------|
+| Galaxy 18          | Ku High |
+| Eutelsat 113       | Ku High |
+| Telstar 11N Africa | Ku Low  |
+| Telstar 11N Europe | Ku Low  |
+| Telstar 18V        | C       |
+
 
 ## <a name="lnb"></a> 2. LNB
 
@@ -101,31 +121,32 @@ Blockstream Satellite:
 
 ### Frequency Range
 
-First, you must verify that the frequency range of the LNB encompasses the
+First, you must verify that the input frequency range of the LNB encompasses the
 frequency of the Blockstream Satellite signal in your coverage area. For
 example, if you are located in North America and you are covered by the Galaxy
-18 satellite, your Blockstream Satellite frequency is 12.02285 GHz. Thus, an LNB
+18 satellite, your Blockstream Satellite frequency is 12.01692 GHz. Thus, an LNB
 that operates from 11.7 GHz to 12.2 GHz would work. In contrast, an LNB that
 operates from 10.7 GHz to 11.7 GHz would NOT work.
 
 **Note on “Universal” LNB:**
 
->A Universal LNB, also known as Universal Ku band LNB, is one that supports two
->distinct frequency sub-bands within the Ku band, the so-called "low band" (10.7
->to 11.7 GHz) and "high band" (11.7 to 12.75 GHz). This type of LNB can indeed
->be used in a Blockstream Satellite receiver setup. However, you should be aware
->that a 22 kHz tone must be sent to the Universal LNB in order to switch its
->sub-band. Since the setup described in this guide is receiver-only, it is not
->able to generate the 22 kHz tone by itself. In this case, a "22 kHz tone
->generator" is needed. The exception would be in case the default sub-band
->(typically the low band, from 10.7 to 11.7 GHz) that the Universal LNB operates
->already suits the frequency you need in your coverage area, in which case you
->can use the LNB without a tone generator.
+>A Universal LNB, also known as Universal Ku band LNB, is an LNB that supports
+>both "Ku low" and "Ku high" bands. We recommend using this type of LNB only
+>within Ku low band region, that is, within coverage of either Telstar 11N
+>Africa or Telstar 11N Europe.
 >
->In case you do need the other sub-band (i.e. the high band) of the Universal
->LNB, you will need to place the 22 kHz tone generator inline between the LNB
->and the power inserter. This is because the tone generator uses power from the
->inserter while delivering the tone directly to the LNB.
+>The rationale is that a 22 kHz tone must be sent to the Universal LNB in order
+>to switch its sub-band. However, since the setup described in this guide is
+>receiver-only, it is not able to generate the 22 kHz tone by itself. Now,
+>because the default Ku sub-band of Universal LNBs is typically the low band, it
+>is often acceptable to use these within Ku low band region, as the 22 kHz tone
+>generator won't be necessary.
+>
+>In case you do want to switch the sub-band of an Universal LNB in order to use
+>it within Ku high band region, you will need to place a 22 kHz tone generator
+>inline between the LNB and the power inserter. This is because the tone
+>generator uses power from the inserter while delivering the tone directly to
+>the LNB.
 >
 >Such tone generators can be found in the market as pure
 >generators. Alternatively, you can get a "satellite finder" device that embeds
@@ -174,8 +195,8 @@ traditional dielectric oscillator (DRO) LNB.
 
 You are advised to use a PLL LNBF with linear polarization and LO stability
 ideally within `+- 200 kHz` or less. The LNB should be suitable for the
-frequency of the satellite covering your location and preferably not a Universal
-LNB.
+frequency of the satellite covering your location. Also, to avoid the need of a
+tone generator, Universal LNBs are not recommended within Ku high band region.
 
 ## <a name="power"></a>  3. LNB Power Inserter
 
@@ -211,20 +232,47 @@ ring that will accept a generic LNB.
 ## <a name="sdr"></a>  5. Software Defined Radio Interface
 
 There are many Software Defined Radio (SDR) interfaces in the market today.
-Blockstream Satellite is currently confirmed to work with the RTL-SDR model
-R820T2. The latter is the SDR that is supported by the receiver codebase.
+Blockstream Satellite is currently predominantly used with the RTL-SDR, model
+RTL2832U & R820T2, which is a low-cost SDR dongle. This is the SDR interface
+that is mostly supported and the one that we recommend.
 
-SDRs other than the RTL-SDR may be used, but only if supported by [GNU
-Radio](https://www.gnuradio.org) and if able to receive frequencies from 950 MHz
-to 1450 MHz. Note, however, that in this case the Blockstream Satellite
-Receiver's source code must be modified to include the given SDR interface.
+We recommend specifically an RTL-SDR dongle that features a
+temperature-controlled crystal oscillator (TCXO), since this type of oscillator
+promotes better frequency stability. There are a few models in the market
+featuring TCXO with frequency accuracy within 0.5 ppm to 1.0 ppm.
+
+**IMPORTANT:** For users within the coverage of satellite **Telstar 11N
+Europe**, we recommend purchasing an RTL-SDR with **extended tuning range**. The
+reason is that the satellite frequency in this area is such that, when using an
+LNB for Ku low band (with `9.75` GHz LO), the RTL-SDR needs to be configured
+with a frequency that is too close to the maximum supported frequency of the
+RTL-SDR model that is recommended for other regions (with the R820T2 tuner). The
+extended range RTL-SDR uses another tuner (the E4000), whose frequency range is
+more than sufficient to cover the frequency that is necessary for Telstar 11N
+Europe.
+
+> NOTE: the extended range RTL-SDR (featuring the E4000 tuner) is **only**
+> recommended for the **Telstar 11N Europe** coverage region. This tuner has a
+> gap in the range of frequencies that it supports and it turns out that this
+> gap encompasses the frequencies that are typically used to receive the
+> Blockstream Satellite signal at three other regions: within Galaxy 18 (North
+> America), Eutelsat 113 (South America) and Telstar 18V (Asia-Pacific).
+
+In addition to the RTL-SDR, there is also support for USRP SDRs, which is a
+higher-cost SDR product family from Ettus Research. Besides, any other SDR
+platform supported by [GNU Radio](https://www.gnuradio.org) can be used,
+provided that it is able to receive frequencies within roughly the 1 GHz to 2
+GHz range. Note, however, that in this case the Receiver's source code must be
+modified to include the given SDR interface.
 
 ## <a name="cable_conn"></a>  6. Cables, Connectors and Mounting Hardware.
 
 You’ll need to connect your SDR to a non-powered port on the LNB power
 supply. The powered port of the power supply, in turn, will be connected to the
 LNB. You’ll need to ensure that you have the necessary coaxial cables and
-connectors to make these interfaces.
+connectors to make these interfaces. The connections are illustrated below:
+
+![Hardware Connections](doc/hardware_connections.png?raw=true "Hardware Connections")
 
 **Note**: Not every RTL-SDR has the same interface connector. Some use the SMA
 connector and some use MCX. Be sure to order the correct cable and adapters to
@@ -238,7 +286,6 @@ There are currently binary packages to facilitate the installation in the
 following distribution/releases:
 
 - Ubuntu bionic (18.04)
-- Fedora 27
 - Fedora 28
 - CentOS 7<sup>*</sup>
 
@@ -254,7 +301,7 @@ This should install all dependencies, including GNU Radio and GrOsmoSDR. In case
 the `add-apt-repository` command is not available in your system, you will need
 to run `apt install software-properties-common`.
 
-If using Fedora 27 or 28, run:
+If using Fedora 28, run:
 
 ```
 dnf copr enable blockstream/satellite
@@ -305,8 +352,8 @@ In case you are flexible with the distribution/release that you can use, we
 advise using one of the following, where GNU Radio 3.7.11 is available:
 
 - Ubuntu bionic (18.04)
-- Fedora 27
 - Fedora 28
+- CentOS 7
 
 The following commands attempt to install GNU Radio version 3.7.11, but you can
 try 3.7.10 or any later version in case 3.7.11 is not available in your system:
@@ -387,7 +434,7 @@ python -c "import blocksat; help(blocksat)"
 ```
 
 If nothing is displayed, then follow the solution in
-[Import Error (FAQ page)](#import_error).
+[Import Error (FAQ section)](#import_error).
 If you are on Fedora or CentOS, you will likely need to include the path as
 follows:
 
@@ -414,7 +461,7 @@ ldd /usr/local/lib64/python2.7/site-packages/blocksat/_blocksat_swig.so | grep b
 ```
 
 If the result is `not found`, then follow the solution in
-[Segmentation Fault (FAQ page)](#seg_fault). This
+[Segmentation Fault (FAQ section)](#seg_fault). This
 will involve adding a path like `/usr/local/lib` (on Ubuntu) or
 `/usr/local/lib64` (on Fedora/CentOS) to the search path of shared libraries,
 as follows:
@@ -427,8 +474,8 @@ export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH
 ```
 
-Once the Python packages and the shared libraries are within reach, move to the
-next step.
+Once the Python packages and the shared libraries are within reach, move on to
+the next step.
 
 #### Build and install the receiver applications
 
@@ -450,9 +497,9 @@ $ sudo make install
 > ```
 >
 > Also, on a headless setup, you will need a virtual display server in order to
-> build. You can follow the details on the [FAQ page](#display_server), but in
-> summary you can overcome this by installing `xorg-x11-server-Xvfb` and running
-> the build/install steps as follows:
+> build. You can follow the details on the [FAQ section](#display_server), but
+> in summary you can overcome this by installing `xorg-x11-server-Xvfb` and
+> running the build/install steps as follows:
 >
 > ```
 > xvfb-run make GUI=0
@@ -599,137 +646,145 @@ cable.
 >RTL-SDR. The **powered** port, in turn, is labeled “Signal to SWM”. This is the
 >port that should be connected to the LNB.
 
-## 5. Run the Blockstream Satellite Receiver
+## 5. Compute the receiver frequency
 
 You are almost ready to run the receiver. The only missing step is to compute
 the frequency to be passed as argument to the receiver application.
 
-### <a name="freq_param"></a> Compute the frequency parameter
+The frequency parameter depends on the frequency of the satellite covering your
+location and the frequency of your LNB's local oscillator (LO) frequency, so it
+is specific to your setup. Also, the computation differs slightly for C band and
+Ku band.
 
-The frequency parameter is computed based on the frequency of the satellite
-covering your location and the frequency of your LNB's local oscillator (LO)
-frequency, so it is specific to your setup.  In particular, it is given by the
-difference between the two frequencies, as follows:
+For Ku band (either high or low), the frequency parameter is computed as
+follows:
 
 ```
-frequency_parameter = your_satellite_frequency - your_lnb_lo_frequency
+frequency_parameter_ku = satellite_frequency - lnb_lo_frequency
+```
+
+Meanwhile, for C band, it is computed as:
+
+```
+frequency_parameter_c = lnb_lo_frequency - satellite_frequency
 ```
 
 To find your satellite's frequency, first go to
 [blockstream.com/satellite](https://blockstream.com/satellite/#satellite_network-coverage)
-and understand which one is your satellite (covering your location). You should
-see the frequency listed in MHz. Then adjust for your LNB LO frequency.
+and check which one is your satellite (covering your location). Then, find the
+frequency and the corresponding band of the satellite in the table that follows.
 
-For example, if your LNB has an LO frequency of 10750 MHz and you're connecting
-to Eutelsat 113 at 12026.15 MHz, the frequency parameter becomes 1276.15 MHz,
-that is:
+| Satellite          | Band    | Frequency    |
+|--------------------|---------|--------------|
+| Galaxy 18          | Ku High | 12016.92 MHz |
+| Eutelsat 113       | Ku High | 12026.15 MHz |
+| Telstar 11N Africa | Ku Low  | 11476.75 MHz |
+| Telstar 11N Europe | Ku Low  | 11504.02 MHz |
+| Telstar 18V        | C       | 4057.5 MHz   |
+
+For the LNB's LO frequency, check the product's information. The typical LNB LO
+frequencies for the bands of interest are summarized below:
+
+|       LO Frequency |   5.15 GHz |   9.75 GHz |  10.60 GHz |  10.75 GHz |
+| ------------------ | ---------- | ---------- | ---------- | ---------- |
+|               Band |          C |     Ku Low |    Ku High |    Ku High |
+
+Now, pick the correct formula for your signal band and compute the
+parameter. For example, if your LNB has an LO frequency of 10750 MHz and you're
+connecting to Eutelsat 113 at 12026.15 MHz (Ku high band), the frequency
+parameter becomes 1,276,150,000 Hz, that is:
 
 ```
-12026.15 - 10750.00 = 1276.15 MHz.
-   ^            ^          ^
-   ^            ^          ^
-sat_freq - lnb_freq = freq_param
+1,276,150,000 Hz       = 12,026,150,000 Hz   - 10,750,000,000 Hz
+   ^                          ^                     ^
+   ^                          ^                     ^
+frequency_parameter_ku = satellite_frequency - lnb_lo_frequency
 ```
 
-### Run the Receiver application (GUI mode)
+> NOTE: the blocksat receiver application expects the frequency parameter in Hz.
 
-Assuming you have built and installed the receiver, now you can run:
+The following table summarizes the frequencies (in Hz) that are required when
+launching the blocksat receiver application, considering the typical LNB LO
+frequencies:
+
+|       LO Frequency |   5.15 GHz |   9.75 GHz |  10.60 GHz |  10.75 GHz |
+| ------------------ | ---------- | ---------- | ---------- | ---------- |
+|          Galaxy 18 |            |            | 1416920000 | 1266920000 |
+|       Eutelsat 113 |            |            | 1426150000 | 1276150000 |
+| Telstar 11N Africa |            | 1726750000 |            |            |
+| Telstar 11N Europe |            | 1754020000 |            |            |
+|        Telstar 18V | 1092500000 |            |            |            |
+
+## 6. Search for the Blockstream Satellite Signal
+
+The next step is to run the blocksat receiver aplication. At this point, to
+facilitate the antenna alignment, we recommend using the blocksat receiver in
+GUI mode. Later on, once the antenna is pointed, you can switch to the
+lightweight console-only application. To launch the GUI receiver, run:
 
 ```
-blocksat-rx-gui -f [freq_in_hz] -g [gain]
+blocksat-rx-gui -f [freq_in_hz]
 ```
 
-<a name="rx_parameters"></a> **Parameters:**
-
-- `freq_in_hz`: the frequency parameter, **specified in units of Hz**. That is,
-in the previous example where the computed frequency was 1276.15 MHz, the
-parameter would be specified as 1276150000 Hz.
-- `gain`: the gain parameter is a value between 0 and 50. Higher gain values may
-be required for long cable runs or LNBs with weak output. Some experimentation
-may be required to identify the best value for your application, explained
-later.
+where `freq_in_hz` is the frequency parameter, **specified as an integer number
+in units of Hz**.
 
 **Example:**
 
 ```
-blocksat-rx-gui -f 1276150000 -g 40
+blocksat-rx-gui -f 1276150000
 ```
 
-### Possible Issues
+>**Possible Issues**
+>
+>- Ensure that your `PYTHONPATH` environment variable is set to the installed
+>location of `gr-framers` and `gr-blocksat`. Usually
+>`/usr/local/lib64/python2.7/site-packages` on RedHat/Fedora or
+>`/usr/local/lib64/python2.7/dist-packages` on Ubuntu.
+>- Ensure your `LD_LIBRARY_PATH` environment variable is set. Typically
+>`/usr/local/lib64`.
 
-- Ensure that your `PYTHONPATH` environment variable is set to the installed
-location of `gr-framers` and `gr-blocksat`. Usually
-`/usr/local/lib64/python2.7/site-packages` on RedHat/Fedora or
-`/usr/local/lib64/python2.7/dist-packages` on Ubuntu.
-- Ensure your `LD_LIBRARY_PATH` environment variable is set. Typically
-`/usr/local/lib64`.
+1. Once `blocksat-rx-gui` is running, the first objective is to recognize the
+   Blockstream Satellite signal band on the plots that are presented in the
+   Overview tab of the GUI. Ideally, you would see a flat level spanning a
+   frequency band (in the horizontal axis) of approximately 250 kHz, which
+   corresponds to Blockstream Satellite's nominal system bandwidth.
 
-## 6. Search for the Blockstream Satellite Signal
+2. If you cannot see the signal using your initial pointing parameters, try
+   several small adjustments of elevation and azimuth around the angles that
+   were given to you by the dish alignment tool. For example, keep the elevation
+   angle fixed and very slowly move the antenna side to side (vary the azimuth
+   angle). Alternatively, keep azimuth fixed and slowly vary the elevation.
 
-1. After running `blocksat-rx-gui` according to the above guidelines, click on the
-   `Freq. Sync` tab in the GUI.
-
-2. Keep the elevation angle fixed and very slowly move the antenna side to side
-   (vary the azimuth angle), until you begin to see a pattern that looks like
-   this:
-
-![Spectrum Found](doc/spectrum_found.png?raw=true "Spectrum Found")
-
-Notice in the spectrum plot that some energy is appearing within the range of
-frequencies that is under observation. Ideally you would see the prominent
-energy as a flat level spanning a frequency band (in the horizontal axis) of
-approximately 200 kHz, which corresponds to Blockstream Satellite's system
-bandwidth.
-
-**Still not found?** Try adjusting the elevation.
-
->If after moving your antenna left and right across a wide range of azimuth over
->which you expect to see the signal you find that you still need to adjust your
->elevation, increase your elevation by 1 degree. Then, sweep the antenna left
->and right through a wide azimuth range again. You may need to repeat this
->increasing by several degrees and decreasing by several degrees of elevation
->before you are able to find the signal.
+>You can organize the procedure as follows. First change your elevation by 1
+>degree. Then, sweep the antenna left and right through a wide azimuth
+>range. Repeat this until you are able to find the signal.
 
 **REMEMBER:**
 
->Even though a single degree may seem like a minuscule movement, each degree is
->tens of thousands of kilometers over the 36,000 kilometers to geosynchronous
->orbit.
+>Even though a single degree may seem like a minuscule movement, each degree
+>represents thousands of kilometers over the geosynchronous orbit.
 
-3. Once the satellite signal is observed by the receiver, the latter applies a
-   coarse frequency correction to center the signal energy around the nominal
-   frequency. In the spectrum plot, this translates into the spectrum being
-   centralized (around 0 Hz):
+The screenshot below illustrates the signal band visible at both the "Spectrum"
+and "Spectrogram" plots of the Overview GUI tab. The signal on the right-hand
+side is roughly from 50 kHz to 300 kHz, so it looks like our
+signal. Importantly, note that in this case (captured on Eutelsat 113) there is
+also a nearby transmission on the left-hand side of the plot. Although by
+inspection we can tell that this other signal is not ours, the only way to
+really know this is by checking the frame synchronization, which is the next
+step.
 
-![Coarse Frequency Correction](doc/spectrum_found_freq_corrected.png?raw=true "Coarse Frequency Correction")
+![Signal visible on Spectrogram](doc/overview_page_signal.png?raw=true "Signal visible on Spectrogram")
 
-You can also get frequency correction information from the console logs, which
-will display a message following the pattern that follows:
+3. Switch to the `Frame Sync` tab in the GUI. You should expect to see a clear peak
+   there, as follows.
 
-```
---------------------------------------------------------------------------------
-[Timestamp] Carrier Frequency Offset: xxx kHz (CORRECTED)
---------------------------------------------------------------------------------
-```
+![Frame Timing Peak](doc/pmf_peak.png?raw=true "Frame Timing Peak")
 
-**NOTE**
-
-> If you successfully see the flat 200 kHz signal band, but you don't see it
-> being centralized as above, you can try running in "scan mode". To do so, just
-> relaunch the application using the `-s` flag. For example, run:
->
->    `blocksat-rx-gui -f 1276150000 -g 40 -s`
-
-4. Once you have located the signal and frequency correction is operating
-   successfully, switch to the `Frame Sync` tab in the GUI. In particular,
-   observe the plot entitled **"Frame Timing Metric"**. You should expect to see
-   a clear peak there, as follows:
-
-![Frame Timing Metric](doc/frame_sync_found_timing_metric.png?raw=true "Frame Timing Metric")
-
-The peak should be strong and, importantly, it should remain in place. It can be
-in any position, but it must remain in the same position for the system to be
-reliable.
+The peak can be toggling up and down and alternating colors, blue and red. What
+is really important is that it is strong and remains steadily in the same
+position. It can be in any position within the plot window, but it must remain
+in the same position for the system to be reliable.
 
 If a steady peak has indeed been achieved, it is very likely that your receiver
 has acquired the so-called "frame synchronization" state. Have a look at the
@@ -749,35 +804,79 @@ periodically in the console:
 --------------------------------------------------------------------------------
 ```
 
-If frame synchronization is not yet acquired, subtly adjust the azimuth,
-elevation and/or rotation of your LNB until you achieve improvements.
-
-5. Now switch to the `Phase Sync` page. You should see a constellation of 4
-point clouds. The more compact the point clouds are, the better your signal
-quality:
-
-![Constellation Diagram](doc/costs_loop_syms_found.png?raw=true "Constellation")
-
-The higher the SNR, the more concentrated the clouds are. Hence, the next step
-is to try to optimize the SNR.
-
-To do so, first go back to `Freq. Sync` tab in the GUI. Prepare to keep an eye
-on the Blockstream Satellite signal (the 200 KHz flat level) while concurrently
-observing the SNR measurements displayed in the console. Then, make very gentle
-changes to elevation, azimuth and/or LNB skew. You should look for the logs in
-the console as the ones below. Try to get the best SNR value you can.
+If frame synchronization has not yet been acquired, you can do some
+troubleshooting. If you see a clear signal at the Overview tab of the GUI, first
+check the frequency offset of the signal. The receiver can correct a frequency
+offset within `+- 250 kHz`. If the signal band is centered at a frequency beyond
+this range, the options are **1)** to re-launch the receiver with a different
+frequency; or **2)** to re-launch the receiver in *scan mode*, specifically by
+adding `-s` flag to the `blocksat-rx-gui` command, as follows:
 
 ```
-[Timestamp] SNR [===================                     ] 8.9559 dB
-[Timestamp] SNR [===================                     ] 8.9760 dB
-[Timestamp] SNR [===================                     ] 9.0228 dB
-[Timestamp] SNR [===================                     ] 9.0793 dB
+blocksat-rx-gui -f 1276150000 -s
 ```
 
-6. Lastly, with the antenna fixed, we recommend performing some quick
-experiments with the gain parameter of the receiver. This is a command line
-argument to the receiver application. Try different values between 0 and 50 and
-see if the SNR improves, for example:
+![High frequency offset seen on Spectrogram](doc/overview_page_signal_offset.png?raw=true "High frequency offset seen on Spectrogram")
+
+The scenario of a frequency offset exceeding the correction range is illustrated
+in the screenshot above. Note that the signal band is clearly visible. However,
+it is centered at approximately `-325 kHz`. Thus, the frequency recovery
+algorithm cannot correct the frequency and, as a result, frame synchronization
+is not acquired. This situation can also be diagnosed by looking at the
+"Freq. Sync" page of the GUI. The goal is to have the "red curve" (spectrum
+after frequency correction) centered around the origin of the horizontal axis,
+as illustrated below. However, if the signal center frequency is beyond the
+correction limit, this won't be the case. As mentioned earlier, either adjust
+the frequency parameter of the receiver or re-launch it in scan mode.
+
+![Spectrum Found](doc/spectrum_found_bpsk.png?raw=true "Spectrum Found")
+
+Now, if the signal band is clear and centered within `+-250 kHz`, but you still
+can't see a peak in the "Frame Sync" page or, correspondingly, you can't get
+`Frame synchronization acquired` log in the console, it is possible that you are
+seeing the wrong signal or pointed to the wrong satellite. If you see two
+similar signal bands, both with an apparent `250 kHz` flat level span, try
+adjusting the frequency parameter such that only one of them is "visible" at a
+time, based on the spectrum plots of the Overview tab. If that doesn't work,
+then it is likely not a signal problem, but rather a satellite problem. Try
+adjusting azimuth and/or elevation again to see if you can find a different
+satellite near the nominal angles that you got from the dish alignment tool.
+
+**ATTENTION:** In Europe, there is a nearby satellite that transmits a similar
+signal band on a similar frequency. Use the above instructions and particularly
+the "Frame Sync" tab of the GUI in order to know when pointed correctly.
+
+4. Now that frame synchronization has been acquired, we are mostly done. At this
+   point, we can only pursue some improvements to the signal quality.
+
+As a sanity check, switch to the `Phase Sync` page. You should see a
+constellation composed by two clouds of points, one close to "-1" and the other
+close to "+1". The more compact the point clouds are, the better your signal
+quality.
+
+![Constellation Diagram](doc/da_phase_rec_syms_bpsk.png?raw=true "Constellation")
+
+To evaluate signal quality, the easiest way is to check the SNR that is being
+printed in the console, as below:
+
+```
+[Timestamp] SNR [================                        ] 7.4401 dB
+[Timestamp] SNR [================                        ] 7.5041 dB
+[Timestamp] SNR [================                        ] 7.3762 dB
+[Timestamp] SNR [================                        ] 7.3644 dB
+[Timestamp] SNR [================                        ] 7.4068 dB
+```
+
+Keep an eye on these logs and then make very gentle adjustments to elevation,
+azimuth and/or LNB skew. You can try adjusting all three parameters, but the
+recommended approach is to try adjusting only one of them at a time. Make a
+small change and check whether it has improved the SNR. Try to stop at the
+optimal point in all of them.
+
+6. Lastly, with the antenna pointing and LNB polarization fixed, we recommend
+performing some quick experiments with the gain parameter of the receiver. This
+is a command line argument to the receiver application. Try different values
+between 0 and 50 and see if the SNR improves, for example:
 
 ```
 # Attempt 1
@@ -789,13 +888,18 @@ blocksat-rx-gui --freq 1276150000 --gain 45
 
 ## 7. Next Steps
 
-Well done. Your receiver is properly set-up and you are now ready to run the
-Bitcoin FIBRE application receiving data via the Blockstream Satellite Network.
-
-For your satellite receiver, you have two options now:
+Well done. Your receiver is properly set-up and you are now ready to run it
+continuously. You have two options now:
 
 1. Continue running in GUI mode, namely the above `blocksat-rx-gui` application.
-2. Run the lean non-GUI receiver application, that is `blocksat-rx`.
+2. Run the lightweight non-GUI receiver application, named `blocksat-rx`.
+
+## 8. Learn More
+
+In case you are interested in learning more about technical aspects of the
+receiver and particularly understanding the performance metrics that are
+displayed in the GUI, please visit the [Understanding the
+GUI guide](../../wiki/Understanding-the-GUI) guide in this wiki.
 
 # Run the Receiver
 
@@ -957,22 +1061,122 @@ blocksat-rx-upper-gui -i 10.0.0.1 -p 5201
 
 # Run Bitcoin FIBRE
 
-The Blockstream Satellite receiver feeds received data into an output named pipe
-that is supposed to be read by the Bitcoin FIBRE application. In case you don't
-have Bitcoin FIBRE installed, do so before proceeding:
+In case you don't have Bitcoin FIBRE installed, do so before proceeding. Make
+sure to use [the master
+branch](https://github.com/bitcoinfibre/bitcoinfibre/tree/master), which is the
+one currently being used by the Blockstream Satellite transmitter.
+
+For more information about Bitcoin FIBRE, refer to:
 
 >Bitcoin FIBRE: http://bitcoinfibre.org
 
-Bitcoin Fibre uses the same `bitcoin.conf` configuration file as Bitcoin Core.
-Configure as needed and then start `bitcoind` with the following parameters
-after the receiver is running.
+Also, build instructions can be found
+[here](https://github.com/bitcoinfibre/bitcoinfibre/tree/master/doc#building).
+
+Note that the Blockstream Satellite receiver feeds received data into an output
+named pipe that is supposed to be read by the Bitcoin FIBRE application. Hence,
+you need to point FIBRE to the named pipe file accordingly. You can start
+`bitcoind` with the following parameters:
 
 ```
-./bitcoind -fecreaddevice=/tmp/blocksat/bitcoinfibre
+bitcoind -fecreaddevice=/tmp/blocksat/bitcoinfibre
 ```
 
-**NOTE:** The Blockstream Satellite receiver will create the
-`/tmp/blocksat/bitcoinfibre` file.
+> **NOTE 1:** The Blockstream Satellite receiver will create the
+> `/tmp/blocksat/bitcoinfibre` file.
+
+> **NOTE 2:** Bitcoin Fibre uses the same `bitcoin.conf` configuration file as
+> Bitcoin Core. Configure as needed.
+
+# Satellite API
+
+Example Python applications for interaction with the Satellite API are available
+in the `api/examples` directory. Please refer to the [documentation
+there](api/examples/).
+
+For more information regarding the Satellite API, please visit
+[blockstream.com/satellite-api](https://blockstream.com/satellite-api/) or the
+documentation in the [`api` directory](api/).
+
+# Running on Raspberry Pi
+
+Blockstream Satellite v1.4.0 or later is confirmed to work with Raspberry Pi 3
+B+ using Ubuntu MATE 18.04.02 for 64-bit architecture. To install on Raspberry,
+proceed with the following steps:
+
+1. Download [Ubuntu MATE Bionic for aarch64
+   (ARMv8)](https://ubuntu-mate.org/download/).
+2. Flash the Ubuntu MATE OS into your microSD card. You can use a tool such as
+   [balenaEtcher](https://www.balena.io/etcher/).
+3. Run Raspberry Pi and install Blockstream Satellite there as usual. Follow the
+   [binary package installation instructions for Ubuntu](#from-binary-packages).
+4. Compile bitcoin FIBRE for Raspberry Pi. You can compile natively on Raspberry
+   Pi or cross-compile (recommended). Assuming the latter, first [cross-compile the dependencies](https://github.com/bitcoinfibre/bitcoinfibre/blob/master/depends/README.md),
+   then [cross-compile the main apps](https://github.com/bitcoinfibre/bitcoinfibre/blob/master/doc/build-unix.md#arm-cross-compilation).
+5. Ship the cross-compiled bitcoin FIBRE applications to Raspberry Pi.
+6. Run `blocksat-rx` and `bitcoin` as usual.
+
+> NOTE: we recommend running the non-GUI (`blocksat-rx`) application, due to CPU
+> limitations. You can use the GUI app (`blocksat-rx-gui`) for pointing the
+> dish, but once pointed, you should switch to `blocksat-rx`.
+
+## Bitcoin FIBRE's cross-compilation from Ubuntu 18.04
+
+The commands in the sequel can be used for bitcoin FIBRE's cross-compilation
+from an Ubuntu 18.04 x86 (`amd64`) machine, targeting the Raspberry Pi's 3 B+
+64-bit processor armv8 (`aarch64`).
+
+First, install all build requirements:
+```
+sudo apt-get install build-essential libtool autotools-dev automake pkg-config bsdmainutils python3
+```
+
+Next, install the `aarch64` toolchain:
+```
+sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu
+```
+
+Then, from `bitcoinfibre`'s root folder, run:
+```
+cd depends
+make HOST=aarch64-linux-gnu NO_QT=1
+cd ..
+./autogen.sh
+./configure --prefix=$PWD/depends/aarch64-linux-gnu --enable-glibc-back-compat --enable-reduce-exports LDFLAGS=-static-libstdc++
+make CXXFLAGS='-pipe -O2 -fvisibility=hidden -DLINUX_ARM -DHAVE_ARM_NEON_H -DGF256_TRY_NEON'
+```
+
+Finally, ship the built applications such as `src/bitcoind` and
+`src/bitcoin-cli` to Raspberry Pi.
+
+# Running on Docker
+
+From the root folder, build the Docker image:
+
+```
+docker build . -t blocksat
+```
+
+> The Docker image is based on an Ubuntu bionic and installs blocksat directly
+> from binary packages.
+
+Next, run the container:
+```
+docker run --rm --privileged -v /dev/bus/usb:/dev/bus/usb -it blocksat
+```
+
+Note **privileged mode** is used in order to allow the container to access the
+RTL-SDR USB device of the host.
+
+> On a Mac OSX host, you will need to set up a
+> [docker-machine](https://docs.docker.com/machine/) in order share the SDR USB
+> device. Once this docker-machine is active, you can share the USB device via
+> the settings of the [machine
+> driver](https://docs.docker.com/machine/drivers/). Then, run the above `docker
+> run` command normally.
+
+Once inside the container, run `blocksat-rx` as usual.
+
 
 # Frequent issues and questions
 

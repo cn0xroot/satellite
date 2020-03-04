@@ -7,6 +7,7 @@ prefix      = /usr/local
 exec_prefix = $(prefix)
 bindir      = $(exec_prefix)/bin
 libdir      = $(exec_prefix)/lib
+sharedir    = $(exec_prefix)/share
 
 ifeq ($(MACHINE), x86_64)
 ifneq ($(OS), "Ubuntu")
@@ -42,6 +43,8 @@ GR_FRAMERS_BUILD_RC   = build/gr-framers_build_record
 GR_BLOCKSAT_BUILD_DIR = gr-blocksat/build
 GR_BLOCKSAT_BUILD_RC  = gr-blocksat/build_record
 
+VERSION = $(shell git describe)
+
 .PHONY: build install clean uninstall blocksat install-blocksat clean-blocksat \
 uninstall-blocksat framers install-framers clean-framers uninstall-framers
 
@@ -50,8 +53,8 @@ build: $(GRC_PY_FILES)
 
 build/%.py: grc/%.grc
 	@echo "Check gr-framers and gr-blocksat installations"
-	@python -c "import framers"
-	@python -c "import blocksat"
+	@python2 -c "import framers"
+	@python2 -c "import blocksat"
 	mkdir -p build
 	grcc $< -d $(@D)
 	@sed -i 's/'\
@@ -60,11 +63,33 @@ build/%.py: grc/%.grc
 	@sed -i 's/'\
 	'dest=\"no_api\", type=\"intx\", default=0/'\
 	'dest=\"no_api\", action=\"store_true\", default=False/g' $@
+	@sed -i 's/'\
+	'dest=\"no_blocks\", type=\"intx\", default=0/'\
+	'dest=\"no_blocks\", action=\"store_true\", default=False/g' $@
+	@sed -i 's/'\
+	'dest=\"dapr_no_reset\", type=\"intx\", default=0/'\
+	'dest=\"dapr_no_reset\", action=\"store_true\", default=False/g' $@
+	@sed -i 's/'\
+	'dest=\"cfo_debug\", type=\"intx\", default=0/'\
+	'dest=\"cfo_debug\", action=\"store_true\", default=False/g' $@
+	@sed -i 's/'\
+	'dest=\"fs_no_phase_corr\", type=\"intx\", default=0/'\
+	'dest=\"fs_no_phase_corr\", action=\"store_true\", default=False/g' $@
+	@sed -i 's/'\
+	'dest=\"fs_no_freq_corr\", type=\"intx\", default=0/'\
+	'dest=\"fs_no_freq_corr\", action=\"store_true\", default=False/g' $@
+	@sed -i 's/'\
+	'dest=\"preamble_stats\", type=\"intx\", default=0/'\
+	'dest=\"preamble_stats\", action=\"store_true\", default=False/g' $@
+	@sed -i 's/'\
+	'option_class=eng_option, description=description/'\
+	'option_class=eng_option, description=description, version=\"'\
+	'Blockstream Satellite $(VERSION)\"/g' $@
 	@chmod u+x $@
-	python -m compileall $@
+	python2 -m compileall $@
 	f=$@ && x=$${f%.py} && y="$${x//_/-}" &&\
 	echo "#!/bin/bash" > $$y &&\
-	echo "/usr/bin/env python $(libdir)/blocksat-rx/$(@F)c \"\$$@\"" >> $$y
+	echo "/usr/bin/env python2 $(libdir)/blocksat-rx/$(@F)c \"\$$@\"" >> $$y
 
 # Build GR Framers
 framers: $(GR_FRAMERS_BUILD_RC)
@@ -102,6 +127,17 @@ install:
 	cd build && ls | grep -v '\.py*' | \
 	xargs -L 1 -I '{}' install -m 0755 '{}' $(DESTDIR)$(bindir)
 
+install-docs:
+	mkdir -p $(DESTDIR)$(sharedir)/doc/satellite/
+	mkdir -p $(DESTDIR)$(sharedir)/doc/satellite/api/
+	mkdir -p $(DESTDIR)$(sharedir)/doc/satellite/api/examples/
+	install -m 0644 README.md $(DESTDIR)$(sharedir)/doc/satellite/
+	install -m 0644 api/README.md $(DESTDIR)$(sharedir)/doc/satellite/api/
+	install -m 0644 api/examples/*.{md,txt} \
+	$(DESTDIR)$(sharedir)/doc/satellite/api/examples/
+	install -m 0755 api/examples/*.py \
+	$(DESTDIR)$(sharedir)/doc/satellite/api/examples/
+
 # Clean builds
 clean-framers:
 	rm -f $(GR_FRAMERS_BUILD_RC)
@@ -130,3 +166,7 @@ uninstall-blocksat:
 uninstall:
 	rm $(DESTDIR)$(libdir)/blocksat-rx/blocksat_rx*
 	rm $(DESTDIR)$(bindir)/blocksat-rx*
+
+uninstall-docs:
+	rm -r $(DESTDIR)$(sharedir)/doc/satellite/
+
